@@ -1,8 +1,9 @@
 from ortools.sat.python import cp_model
+import requests
 
 
 def valid_data(sources_and_targets):
-    """Returns True if the provided input data can be processed by the optimizer.
+    """Returns True if the provided input data can be processed by the classifier.
 
     :param sources_and_targets: Information about potential source elements and target pages in JSON format
     :type sources_and_targets: dict
@@ -25,6 +26,38 @@ def valid_data(sources_and_targets):
         if not "id" in source:
             print(f"Missing key: 'id' in 'sources[{index}]'")
             return False
+        if not "parentId" in source:
+            print(f"Missing key: 'parentId' in 'sources[{index}]'")
+            return False
+        if not "characters" in source:
+            print(f"Missing key: 'characters' in 'sources[{index}]'")
+            return False
+        if not "color" in source:
+            print(f"Missing key: 'color' in 'sources[{index}]'")
+            return False
+        color = source["color"]
+        if not isinstance(color, dict):
+            print(f"Should be dict: 'sources[{index}]['color']'")
+            return False
+        for color_variable in ["r", "g", "b"]:
+            if not color_variable in color:
+                print(f"Missing key: '{color_variable}' in 'sources[{index}]['color']'")
+                return False
+            if not isinstance(color[color_variable], float) and not isinstance(
+                color[color_variable], int
+            ):
+                print(f"Should be float: 'sources[{index}]['color'][{color_variable}]'")
+                return False
+            if not color[color_variable] >= 0:
+                print(
+                    f"Should be greater or equal 0: 'sources[{index}]['color'][{color_variable}]'"
+                )
+                return False
+            if not color[color_variable] <= 1:
+                print(
+                    f"Should be less than or equal 1: 'sources[{index}]['color'][{color_variable}]'"
+                )
+                return False
     if not "targets" in sources_and_targets:
         print("Missing key: 'targets'")
         return False
@@ -42,16 +75,27 @@ def valid_data(sources_and_targets):
         if not "id" in target:
             print(f"Missing key: 'id' in 'sources[{index}]'")
             return False
+        if not "topics" in target:
+            print(f"Missing key: 'topics' in 'sources[{index}]'")
+            return False
+        topics = target["topics"]
+        if not isinstance(topics, list):
+            print(f"Should be list: 'targets[{index}]['topics']'")
+            return False
+        for topic_index, topic in enumerate(topics):
+            if not isinstance(topic, str):
+                print(f"Should be str: 'targets[{index}]['topics'][{topic_index}]'")
+                return False
     return True
 
 
 def get_qualifications(sources, targets):
-    # TODO: Add qualification computation via classification
-    qualifications = [
-        [-4, 0.7],
-        [0.2, -4],
-    ]
-    return qualifications
+    payload = {"sources": sources, "targets": targets}
+    response = requests.post("http://127.0.0.1:3000/qualifications", json=payload)
+    if response.status_code == 200:
+        data = response.json()
+        return data["qualifications"]
+    return []
 
 
 def get_links(qualifications, sources, targets):
