@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask_cors import CORS
-from utils import valid_data, suggested_links
+from utils import valid_data, suggested_links, update_classifier
 
 app = Flask(__name__)
 CORS(app)
@@ -22,3 +22,16 @@ def links():
         return suggested_links(request.json)
     else:
         return {"links": []}
+
+
+@app.route("/model/<user_id>/links", methods=["POST"])
+def links_from_interactive_model(user_id):
+    if valid_data(request.json):
+        return suggested_links(request.json, user_id)
+    else:
+        return {"links": []}
+
+
+@app.route("/model/<user_id>/update", methods=["POST"])
+def update_model(user_id):
+    return update_classifier(request.json, user_id)

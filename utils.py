@@ -1,6 +1,8 @@
 from ortools.sat.python import cp_model
 import requests
 
+from constants import BASE_URL, SOURCES, TARGETS
+
 
 def valid_data(sources_and_targets):
     """Returns True if the provided input data can be processed by the classifier.
@@ -9,10 +11,10 @@ def valid_data(sources_and_targets):
     :type sources_and_targets: dict
     """
     # TODO: Add validation
-    if not "sources" in sources_and_targets:
+    if not SOURCES in sources_and_targets:
         print("Missing key: 'sources'")
         return False
-    sources = sources_and_targets["sources"]
+    sources = sources_and_targets[SOURCES]
     if not isinstance(sources, list):
         print("Should be list: 'sources'")
         return False
@@ -58,10 +60,10 @@ def valid_data(sources_and_targets):
                     f"Should be less than or equal 1: 'sources[{index}]['color'][{color_variable}]'"
                 )
                 return False
-    if not "targets" in sources_and_targets:
+    if not TARGETS in sources_and_targets:
         print("Missing key: 'targets'")
         return False
-    targets = sources_and_targets["targets"]
+    targets = sources_and_targets[TARGETS]
     if not isinstance(targets, list):
         print("Should be list: 'targets'")
         return False
@@ -89,9 +91,14 @@ def valid_data(sources_and_targets):
     return True
 
 
-def get_qualifications(sources, targets):
-    payload = {"sources": sources, "targets": targets}
-    response = requests.post("http://127.0.0.1:3000/qualifications", json=payload)
+def get_qualifications(sources, targets, user_id=None):
+    payload = {SOURCES: sources, TARGETS: targets}
+    url = (
+        f"{BASE_URL}/model/{user_id}/qualifications"
+        if user_id
+        else f"{BASE_URL}/qualifications"
+    )
+    response = requests.post(url, json=payload)
     if response.status_code == 200:
         data = response.json()
         return data["qualifications"]
@@ -147,9 +154,22 @@ def get_links(qualifications, sources, targets):
     return links
 
 
-def suggested_links(sources_and_targets):
-    sources = sources_and_targets["sources"]
-    targets = sources_and_targets["targets"]
-    qualifications = get_qualifications(sources, targets)
+def suggested_links(sources_and_targets, user_id=None):
+    sources = sources_and_targets[SOURCES]
+    targets = sources_and_targets[TARGETS]
+    qualifications = get_qualifications(sources, targets, user_id)
     links = get_links(qualifications, sources, targets)
     return {"links": links}
+
+
+def update_classifier(link_and_label, user_id):
+    LINK = "link"
+    IS_LINK = "isLink"
+    link = link_and_label[LINK]
+    is_link = link_and_label[IS_LINK]
+    payload = {LINK: link, IS_LINK: is_link}
+    url = f"{BASE_URL}/model/{user_id}/update"
+    response = requests.post(url, json=payload)
+    if response.status_code == 200:
+        return {"message": "model updated"}
+    return {"message": "model update failed"}
