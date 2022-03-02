@@ -1,7 +1,7 @@
 from ortools.sat.python import cp_model
 import requests
 
-from constants import BASE_URL, SOURCES, TARGETS
+from constants import BASE_URL, SOURCES, TARGETS, CONTEXT
 
 
 def valid_data(sources_and_targets):
@@ -88,11 +88,19 @@ def valid_data(sources_and_targets):
             if not isinstance(topic, str):
                 print(f"Should be str: 'targets[{index}]['topics'][{topic_index}]'")
                 return False
+        if not CONTEXT in sources_and_targets:
+            print("Missing key: 'context'")
+            return False
+        context = sources_and_targets[CONTEXT]
+        if not isinstance(context, list):
+            print("Should be list: 'context'")
+            return False
+
     return True
 
 
-def get_qualifications(sources, targets, user_id=None):
-    payload = {SOURCES: sources, TARGETS: targets}
+def get_qualifications(sources, targets, context, user_id=None):
+    payload = {SOURCES: sources, TARGETS: targets, CONTEXT: context}
     url = (
         f"{BASE_URL}/model/{user_id}/qualifications"
         if user_id
@@ -149,6 +157,7 @@ def get_links(qualifications, sources, targets):
                         {
                             "sourceId": sources[e]["id"],
                             "targetId": targets[p]["id"],
+                            "qualification": qualifications[e][p],
                         }
                     )
     return links
@@ -157,7 +166,8 @@ def get_links(qualifications, sources, targets):
 def suggested_links(sources_and_targets, user_id=None):
     sources = sources_and_targets[SOURCES]
     targets = sources_and_targets[TARGETS]
-    qualifications = get_qualifications(sources, targets, user_id)
+    context = sources_and_targets[CONTEXT]
+    qualifications = get_qualifications(sources, targets, context, user_id)
     links = get_links(qualifications, sources, targets)
     return {"links": links}
 
