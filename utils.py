@@ -1,5 +1,6 @@
 from ortools.sat.python import cp_model
 import requests
+# from pprint import pprint
 
 from constants import BASE_URL, SOURCES, TARGETS, CONTEXT
 
@@ -168,6 +169,7 @@ def suggested_links(sources_and_targets, user_id=None):
     targets = sources_and_targets[TARGETS]
     context = sources_and_targets[CONTEXT]
     qualifications = get_qualifications(sources, targets, context, user_id)
+    # pprint([{'source': sources[s]['name'], 'target': targets[t]['name'], 'qualification': qualifications[s][t]} for s in range(len(qualifications)) for t in range(len(qualifications[s])) if sources[s]['characters'] in ['To Shopping Bag', 'Classics', 'More details', 'Home', 'Detail']])
     links = get_links(qualifications, sources, targets)
     return {"links": links}
 
