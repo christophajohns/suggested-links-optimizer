@@ -1,0 +1,1 @@
+web: gunicorn optimizer:app --log-file=-
