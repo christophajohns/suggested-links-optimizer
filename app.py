@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 from flask_cors import CORS
 from utils import valid_data, suggested_links, update_classifier
 
@@ -21,7 +21,7 @@ def links():
     if valid_data(request.json):
         return suggested_links(request.json)
     else:
-        return {"links": []}
+        abort(400)
 
 
 @app.route("/model/<user_id>/links", methods=["POST"])
@@ -29,7 +29,7 @@ def links_from_interactive_model(user_id):
     if valid_data(request.json):
         return suggested_links(request.json, user_id)
     else:
-        return {"links": []}
+        abort(400)
 
 
 @app.route("/model/<user_id>/update", methods=["POST"])
