@@ -111,7 +111,7 @@ def get_qualifications(sources, targets, context, user_id=None):
         if user_id
         else f"{BASE_URL}/qualifications"
     )
-    response = requests.post(url, json=payload)
+    response = requests.post(url, json=payload, timeout=30)
     if response.status_code == 200:
         data = response.json()
         return data["qualifications"]
@@ -185,7 +185,7 @@ def update_classifier(link_and_label, user_id):
     is_link = link_and_label[IS_LINK]
     payload = {LINK: link, IS_LINK: is_link}
     url = f"{BASE_URL}/model/{user_id}/update"
-    response = requests.post(url, json=payload)
+    response = requests.post(url, json=payload, timeout=30)
     if response.status_code == 200:
         return {"message": "model updated"}
     return {"message": "model update failed"}
