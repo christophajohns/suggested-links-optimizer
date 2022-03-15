@@ -1,8 +1,12 @@
 from ortools.sat.python import cp_model
 import requests
+import os
+
 # from pprint import pprint
 
-from constants import BASE_URL, SOURCES, TARGETS, CONTEXT
+from constants import SOURCES, TARGETS, CONTEXT
+
+BASE_URL = os.getenv("BASE_URL")
 
 
 def valid_data(sources_and_targets):
