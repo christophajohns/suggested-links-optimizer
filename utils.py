@@ -2,111 +2,64 @@ from ortools.sat.python import cp_model
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import os
+from constants import (
+    SOURCES,
+    TARGETS,
+    PAGES,
+    ID,
+    TYPE,
+    BOUNDS,
+    X,
+    Y,
+    WIDTH,
+    HEIGHT,
+    CHILDREN,
+)
 
 # from pprint import pprint
-
-from constants import SOURCES, TARGETS, CONTEXT
 
 BASE_URL = os.getenv("BASE_URL")
 
 
-def valid_data(sources_and_targets):
-    """Returns True if the provided input data can be processed by the classifier.
+def validate_data(pages_data: dict):
+    """Raises an error if the provided input data cannot be processed by the classifier.
 
-    :param sources_and_targets: Information about potential source elements and target pages in JSON format
-    :type sources_and_targets: dict
+    :param pages_data: Information about the application's pages in JSON format
+    :type pages_data: dict
     """
-    # TODO: Add validation
-    if not SOURCES in sources_and_targets:
-        print("Missing key: 'sources'")
-        return False
-    sources = sources_and_targets[SOURCES]
-    if not isinstance(sources, list):
-        print("Should be list: 'sources'")
-        return False
-    if not len(sources) > 0:
-        print("Should have length greater 0: 'sources'")
-        return False
-    for index, source in enumerate(sources):
-        if not isinstance(source, dict):
-            print(f"Should be dict: 'sources[{index}]'")
-            return False
-        if not "id" in source:
-            print(f"Missing key: 'id' in 'sources[{index}]'")
-            return False
-        if not "parentId" in source:
-            print(f"Missing key: 'parentId' in 'sources[{index}]'")
-            return False
-        if not "characters" in source:
-            print(f"Missing key: 'characters' in 'sources[{index}]'")
-            return False
-        if not "color" in source:
-            print(f"Missing key: 'color' in 'sources[{index}]'")
-            return False
-        color = source["color"]
-        if not isinstance(color, dict):
-            print(f"Should be dict: 'sources[{index}]['color']'")
-            return False
-        for color_variable in ["r", "g", "b"]:
-            if not color_variable in color:
-                print(f"Missing key: '{color_variable}' in 'sources[{index}]['color']'")
-                return False
-            if not isinstance(color[color_variable], float) and not isinstance(
-                color[color_variable], int
-            ):
-                print(f"Should be float: 'sources[{index}]['color'][{color_variable}]'")
-                return False
-            if not color[color_variable] >= 0:
-                print(
-                    f"Should be greater or equal 0: 'sources[{index}]['color'][{color_variable}]'"
-                )
-                return False
-            if not color[color_variable] <= 1:
-                print(
-                    f"Should be less than or equal 1: 'sources[{index}]['color'][{color_variable}]'"
-                )
-                return False
-    if not TARGETS in sources_and_targets:
-        print("Missing key: 'targets'")
-        return False
-    targets = sources_and_targets[TARGETS]
-    if not isinstance(targets, list):
-        print("Should be list: 'targets'")
-        return False
-    if not len(targets) > 1:
-        print("Should have length greater 1: 'sources'")
-        return False
-    for index, target in enumerate(targets):
-        if not isinstance(target, dict):
-            print(f"Should be dict: 'targets[{index}]'")
-            return False
-        if not "id" in target:
-            print(f"Missing key: 'id' in 'sources[{index}]'")
-            return False
-        if not "topics" in target:
-            print(f"Missing key: 'topics' in 'sources[{index}]'")
-            return False
-        topics = target["topics"]
-        if not isinstance(topics, list):
-            print(f"Should be list: 'targets[{index}]['topics']'")
-            return False
-        for topic_index, topic in enumerate(topics):
-            if not isinstance(topic, str):
-                print(f"Should be str: 'targets[{index}]['topics'][{topic_index}]'")
-                return False
-        if not CONTEXT in sources_and_targets:
-            print("Missing key: 'context'")
-            return False
-        context = sources_and_targets[CONTEXT]
-        if not isinstance(context, list):
-            print("Should be list: 'context'")
-            return False
 
-    return True
+    def validate_node(node: dict):
+        for key in [ID, TYPE, BOUNDS]:
+            if not key in node:
+                print(node)
+                raise Exception(f"Missing key: {key}")
+        for key in [X, Y, WIDTH, HEIGHT]:
+            if not key in node[BOUNDS]:
+                print(node)
+                raise Exception(f"Missing key: {key}")
+        if CHILDREN in node:
+            for child in node[CHILDREN]:
+                validate_node(child)
+
+    if not isinstance(pages_data, dict):
+        raise Exception(f"Should be dict: pages_data")
+    if not PAGES in pages_data:
+        raise Exception(f"Missing key: {PAGES}")
+    pages = pages_data[PAGES]
+    if not isinstance(pages, list):
+        raise Exception(f"Should be list: {PAGES}")
+    for page_index, page in enumerate(pages):
+        if not isinstance(page, dict):
+            raise Exception(f"Should be dict: {PAGES}[{page_index}]")
+        for key in [ID, WIDTH, HEIGHT, CHILDREN]:
+            if not key in page:
+                raise Exception(f"Missing key: {key} in {PAGES}[{page_index}]")
+        for child in page[CHILDREN]:
+            validate_node(child)
 
 
-def get_qualifications(sources, targets, context, user_id=None):
-    payload = {SOURCES: sources, TARGETS: targets, CONTEXT: context}
+def get_qualifications(pages, user_id=None):
+    payload = {PAGES: pages}
     url = (
         f"{BASE_URL}/model/{user_id}/qualifications"
         if user_id
@@ -116,14 +69,14 @@ def get_qualifications(sources, targets, context, user_id=None):
     adapter = HTTPAdapter(max_retries=retries)
     session = requests.Session()
     session.mount("https://", adapter)
-    response = session.post(url, json=payload, timeout=30)
+    response = session.post(url, json=payload, timeout=300)
     if response.status_code == 200:
         data = response.json()
         return data["qualifications"]
     return []
 
 
-def get_links(qualifications, sources, targets):
+def get_links(qualifications):
     # Declare model
     model = cp_model.CpModel()
     num_source_elements = len(qualifications)
@@ -150,7 +103,7 @@ def get_links(qualifications, sources, targets):
     objective_terms = []
     for e in range(num_source_elements):
         for p in range(num_target_pages):
-            objective_terms.append(qualifications[e][p] * l[e][p])
+            objective_terms.append(qualifications[e][p]["probability"] * l[e][p])
     model.Maximize(sum(objective_terms))
 
     # Invoke solver
@@ -165,21 +118,19 @@ def get_links(qualifications, sources, targets):
                 if solver.BooleanValue(l[e][p]):
                     links.append(
                         {
-                            "sourceId": sources[e]["id"],
-                            "targetId": targets[p]["id"],
-                            "qualification": qualifications[e][p],
+                            "sourceId": qualifications[e][p]["source"]["id"],
+                            "targetId": qualifications[e][p]["target"]["id"],
+                            "qualification": qualifications[e][p]["probability"],
                         }
                     )
     return links
 
 
-def suggested_links(sources_and_targets, user_id=None):
-    sources = sources_and_targets[SOURCES]
-    targets = sources_and_targets[TARGETS]
-    context = sources_and_targets[CONTEXT]
-    qualifications = get_qualifications(sources, targets, context, user_id)
+def suggested_links(pages_data, user_id=None):
+    all_pages = pages_data[PAGES]
+    qualifications = get_qualifications(pages=all_pages, user_id=user_id)
     # pprint([{'source': sources[s]['name'], 'target': targets[t]['name'], 'qualification': qualifications[s][t]} for s in range(len(qualifications)) for t in range(len(qualifications[s])) if sources[s]['characters'] in ['To Shopping Bag', 'Classics', 'More details', 'Home', 'Detail']])
-    links = get_links(qualifications, sources, targets)
+    links = get_links(qualifications)
     return {"links": links}
 
 
@@ -194,7 +145,20 @@ def update_classifier(link_and_label, user_id):
     adapter = HTTPAdapter(max_retries=retries)
     session = requests.Session()
     session.mount("https://", adapter)
-    response = session.post(url, json=payload, timeout=30)
+    response = session.post(url, json=payload, timeout=300)
     if response.status_code == 200:
         return {"message": "model updated"}
     return {"message": "model update failed"}
+
+
+if __name__ == "__main__":
+    import json
+    from pprint import pprint
+
+    BASE_URL = "http://127.0.0.1:3000"
+
+    with open("pages-data-example.json") as f:
+        pages_data = json.load(f)
+    validate_data(pages_data)
+    links = suggested_links(pages_data)
+    pprint(links)

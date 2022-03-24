@@ -1,0 +1,101 @@
+{"pages": [{
+    "id": "22:10",
+    "width": 390,
+    "height": 844,
+    "children": [
+        {
+            "id": "22:11",
+            "type": "TEXT",
+            "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 128,
+                "height": 64
+            },
+            "characters": "Checkout Shopping Cash Card"
+        },
+        {
+            "id": "22:12",
+            "type": "GROUP",
+            "bounds": {
+                "x": 128,
+                "y": 0,
+                "width": 128,
+                "height": 64
+            },
+            "children": [
+                {
+                    "id": "22:13",
+                    "type": "TEXT",
+                    "bounds": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 128,
+                        "height": 64
+                    },
+                    "characters": "Some other text"
+                }
+            ]
+        },
+        {
+            "id": "22:14",
+            "type": "RECTANGLE",
+            "bounds": {
+                "x": 0,
+                "y": 64,
+                "width": 128,
+                "height": 64
+            }
+        }
+    ]
+},{
+    "id": "23:10",
+    "width": 390,
+    "height": 844,
+    "children": [
+        {
+            "id": "23:11",
+            "type": "TEXT",
+            "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 128,
+                "height": 64
+            },
+            "characters": "Checkout"
+        },
+        {
+            "id": "23:12",
+            "type": "GROUP",
+            "bounds": {
+                "x": 128,
+                "y": 0,
+                "width": 128,
+                "height": 64
+            },
+            "children": [
+                {
+                    "id": "23:13",
+                    "type": "TEXT",
+                    "bounds": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 128,
+                        "height": 64
+                    },
+                    "characters": "Shopping Bag"
+                }
+            ]
+        },
+        {
+            "id": "23:14",
+            "type": "RECTANGLE",
+            "bounds": {
+                "x": 0,
+                "y": 64,
+                "width": 128,
+                "height": 64
+            }
+        }
+    ]
+}]}

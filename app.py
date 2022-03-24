@@ -1,6 +1,6 @@
 from flask import Flask, request, abort
 from flask_cors import CORS
-from utils import valid_data, suggested_links, update_classifier
+from utils import validate_data, suggested_links, update_classifier
 
 app = Flask(__name__)
 CORS(app)
@@ -18,17 +18,21 @@ def index():
 
 @app.route("/links", methods=["POST"])
 def links():
-    if valid_data(request.json):
+    try:
+        validate_data(request.json)
         return suggested_links(request.json)
-    else:
+    except Exception as error:
+        print(error)
         abort(400)
 
 
 @app.route("/model/<user_id>/links", methods=["POST"])
 def links_from_interactive_model(user_id):
-    if valid_data(request.json):
+    try:
+        validate_data(request.json)
         return suggested_links(request.json, user_id)
-    else:
+    except Exception as error:
+        print(error)
         abort(400)
 
 
