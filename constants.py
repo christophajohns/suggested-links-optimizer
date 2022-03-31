@@ -1,5 +1,3 @@
-SOURCES = "sources"
-TARGETS = "targets"
 PAGES = "pages"
 ID = "id"
 WIDTH = "width"

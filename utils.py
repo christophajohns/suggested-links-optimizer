@@ -3,8 +3,6 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 import os
 from constants import (
-    SOURCES,
-    TARGETS,
     PAGES,
     ID,
     TYPE,
@@ -121,6 +119,7 @@ def get_links(qualifications):
                             "sourceId": qualifications[e][p]["source"]["id"],
                             "targetId": qualifications[e][p]["target"]["id"],
                             "qualification": qualifications[e][p]["probability"],
+                            "info": qualifications[e][p]["info"],
                         }
                     )
     return links
@@ -131,7 +130,8 @@ def suggested_links(pages_data, user_id=None):
     qualifications = get_qualifications(pages=all_pages, user_id=user_id)
     # pprint([{'source': sources[s]['name'], 'target': targets[t]['name'], 'qualification': qualifications[s][t]} for s in range(len(qualifications)) for t in range(len(qualifications[s])) if sources[s]['characters'] in ['To Shopping Bag', 'Classics', 'More details', 'Home', 'Detail']])
     links = get_links(qualifications)
-    return {"links": links}
+    sorted_links = sorted(links, key=lambda link: link["qualification"], reverse=True)
+    return {"links": sorted_links}
 
 
 def update_classifier(link_and_label, user_id):
